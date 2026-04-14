@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,7 +100,11 @@
   <div id="root"></div>
 
   <script type="text/babel" data-presets="react">
-    const { useState } = React;
+    const { useState, useEffect } = React;
+
+    /* ── localStorage keys ── */
+    const LS_LOGS = 'lt_logs';
+    const LS_DATE = 'lt_today_date';
 
     /* ── SVG icon helpers ── */
     const Icon = ({ size = 20, color = "currentColor", sw = 1.5, children }) => (
@@ -120,8 +125,16 @@
 
     /* ── App ── */
     function LensTracker() {
-      const [logs, setLogs]           = useState([]);
-      const [todayLogged, setToday]   = useState(false);
+      const [logs, setLogs] = useState(() => {
+        try { return JSON.parse(localStorage.getItem(LS_LOGS)) || []; }
+        catch { return []; }
+      });
+
+      // todayLogged resets automatically on a new calendar day
+      const [todayLogged, setToday] = useState(() => {
+        try { return localStorage.getItem(LS_DATE) === new Date().toDateString(); }
+        catch { return false; }
+      });
       const [catchupOpen, setCatchup] = useState(false);
       const [catchupCount, setCount]  = useState(1);
 
@@ -129,6 +142,12 @@
       const isWarn   = daysWorn >= 21;
       const daysLeft = Math.max(0, 21 - daysWorn);
       const progress = Math.min((daysWorn / 21) * 100, 100);
+
+      // Persist logs to localStorage whenever they change
+      useEffect(() => {
+        try { localStorage.setItem(LS_LOGS, JSON.stringify(logs)); }
+        catch {}
+      }, [logs]);
 
       const G = { btn:"#22c55e", text:"#15803d", light:"#f0fdf4", border:"#86efac", glow:"#22c55e40" };
       const R = { btn:"#ef4444", text:"#b91c1c", light:"#fef2f2", border:"#fca5a5", glow:"#ef444440" };
@@ -144,6 +163,8 @@
           id:      Date.now(),
           catchup: false,
         }]);
+        // Remember today's date so the button resets tomorrow
+        try { localStorage.setItem(LS_DATE, now.toDateString()); } catch {}
         setToday(true);
       };
 
@@ -164,7 +185,10 @@
         setCount(1);
       };
 
-      const reset = () => { setLogs([]); setToday(false); setCatchup(false); };
+      const reset = () => {
+        setLogs([]); setToday(false); setCatchup(false);
+        try { localStorage.removeItem(LS_LOGS); localStorage.removeItem(LS_DATE); } catch {}
+      };
 
       const mono = { fontFamily: "'Geist Mono', 'Courier New', monospace" };
 
