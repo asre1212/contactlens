@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Lenses" />
+  <meta name="theme-color" content="#f7fbff" />
+  <title>Lens Tracker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #e9f7fb;
+      --bg-2: #fff7ed;
+      --surface: rgba(255, 255, 255, 0.82);
+      --surface-solid: #ffffff;
+      --ink: #17202a;
+      --muted: #667085;
+      --faint: #98a2b3;
+      --line: rgba(33, 50, 64, 0.12);
+      --line-strong: rgba(33, 50, 64, 0.2);
+      --ok: #0e9f6e;
+      --ok-2: #10b981;
+      --ok-soft: #e7f9f2;
+      --warn: #e5484d;
+      --warn-2: #ff6b4a;
+      --warn-soft: #fff0ed;
+      --aqua: #2bb3c0;
+      --aqua-soft: #e7f8fb;
+      --amber: #f59e0b;
+      --shadow: 0 22px 60px rgba(21, 39, 54, 0.16);
+      --shadow-soft: 0 12px 28px rgba(21, 39, 54, 0.09);
+      --radius: 22px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 18% 0%, rgba(43, 179, 192, 0.22), transparent 28rem),
+        radial-gradient(circle at 82% 12%, rgba(245, 158, 11, 0.16), transparent 24rem),
+        linear-gradient(145deg, var(--bg), #f7fbff 48%, var(--bg-2));
+      color: var(--ink);
+      display: grid;
+      place-items: stretch center;
+      overflow-x: hidden;
+    }
+
+    button {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app-shell {
+      width: min(100%, 460px);
+      min-height: 100dvh;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+      position: relative;
+    }
+
+    .app {
+      min-height: calc(100dvh - 34px);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 2px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      border: 1px solid rgba(43, 179, 192, 0.32);
+      background: linear-gradient(150deg, #ffffff, #e7f8fb);
+      box-shadow: var(--shadow-soft);
+      display: grid;
+      place-items: center;
+      color: var(--aqua);
+      flex: 0 0 auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 3px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 6vw, 1.85rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .icon-button,
+    .text-button {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--muted);
+      border-radius: 12px;
+      min-width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    .text-button {
+      padding: 0 12px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .icon-button:active,
+    .text-button:active,
+    .primary:active,
+    .ghost-action:active,
+    .stepper button:active {
+      transform: scale(0.97);
+    }
+
+    .hero-card {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background:
+        linear-gradient(165deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.68)),
+        linear-gradient(135deg, rgba(43, 179, 192, 0.14), rgba(245, 158, 11, 0.12));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent 0 46%, rgba(255, 255, 255, 0.55) 46% 47%, transparent 47%),
+        linear-gradient(0deg, transparent 0 54%, rgba(255, 255, 255, 0.45) 54% 55%, transparent 55%);
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .days {
+      font-size: clamp(4.6rem, 26vw, 7.1rem);
+      line-height: 0.88;
+      font-weight: 900;
+      color: var(--active);
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .days-label {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--active-border);
+      background: var(--active-soft);
+      color: var(--active-text);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .progress-wrap {
+      grid-column: 1 / -1;
+      margin-top: 2px;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(23, 32, 42, 0.09);
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      width: var(--progress);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--active-2), var(--active));
+      transition: width 280ms ease;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .primary,
+    .ghost-action {
+      width: 100%;
+      min-height: 56px;
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .primary {
+      border: 0;
+      background: linear-gradient(135deg, var(--active-2), var(--active));
+      color: #ffffff;
+      box-shadow: 0 14px 34px var(--active-glow);
+    }
+
+    .primary:disabled {
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--faint);
+      box-shadow: none;
+      cursor: default;
+      border: 1px solid var(--line);
+    }
+
+    .ghost-action {
+      border: 1px dashed var(--line-strong);
+      background: rgba(255, 255, 255, 0.45);
+      color: var(--muted);
+      min-height: 48px;
+      font-size: 0.82rem;
+    }
+
+    .history {
+      flex: 1;
+      min-height: 220px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.56);
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .history-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .history-count {
+      color: var(--faint);
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .log-list {
+      padding: 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .empty {
+      flex: 1;
+      min-height: 220px;
+      display: grid;
+      place-items: center;
+      padding: 26px;
+      color: var(--faint);
+      text-align: center;
+    }
+
+    .empty svg {
+      color: rgba(43, 179, 192, 0.28);
+      margin-bottom: 12px;
+    }
+
+    .empty strong {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .log-row {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 11px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .log-row:first-child {
+      background: #ffffff;
+      box-shadow: 0 8px 18px rgba(21, 39, 54, 0.08);
+    }
+
+    .day-chip {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 0.82rem;
+      color: var(--chip);
+      border: 1px solid var(--chip-border);
+      background: var(--chip-bg);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .log-date {
+      font-size: 0.94rem;
+      font-weight: 750;
+      color: var(--ink);
+    }
+
+    .log-time {
+      margin-top: 2px;
+      color: var(--faint);
+      font-size: 0.78rem;
+      font-weight: 650;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--chip);
+    }
+
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0 12px;
+      background: rgba(15, 23, 42, 0.28);
+      animation: fadeIn 160ms ease;
+    }
+
+    .sheet {
+      width: min(100%, 436px);
+      max-height: 88dvh;
+      overflow-y: auto;
+      border-radius: 28px 28px 0 0;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      background: linear-gradient(180deg, #ffffff, #f7fbff);
+      box-shadow: 0 -22px 54px rgba(15, 23, 42, 0.22);
+      padding: 12px 18px max(26px, env(safe-area-inset-bottom));
+      animation: slideUp 220ms cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .grabber {
+      width: 42px;
+      height: 5px;
+      margin: 2px auto 18px;
+      border-radius: 999px;
+      background: #d0d5dd;
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .sheet h2 {
+      margin: 0;
+      font-size: 1.22rem;
+      letter-spacing: 0;
+    }
+
+    .sheet p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .step-list {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .setup-step {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: start;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+
+    .setup-step span {
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: var(--aqua-soft);
+      color: #087886;
+      font-weight: 900;
+      font-size: 0.78rem;
+    }
+
+    .url-box {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #ffffff;
+      padding: 13px;
+      margin-top: 16px;
+    }
+
+    .url-label {
+      color: var(--faint);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .url-value {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+      word-break: break-all;
+      margin-bottom: 12px;
+    }
+
+    .sheet-action {
+      width: 100%;
+      border: 0;
+      border-radius: 15px;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      background: var(--ink);
+      color: #ffffff;
+      cursor: pointer;
+      font-weight: 900;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: 52px 1fr 52px;
+      align-items: center;
+      gap: 14px;
+      margin: 20px 0;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #ffffff;
+    }
+
+    .stepper button {
+      width: 52px;
+      height: 52px;
+      border: 0;
+      border-radius: 17px;
+      background: var(--aqua-soft);
+      color: #087886;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 160ms ease;
+    }
+
+    .step-count {
+      text-align: center;
+    }
+
+    .step-count strong {
+      display: block;
+      font-size: 3.1rem;
+      line-height: 0.9;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .step-count span {
+      color: var(--faint);
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(22px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 60;
+      max-width: min(92vw, 390px);
+      border-radius: 15px;
+      padding: 12px 15px;
+      color: #ffffff;
+      background: var(--ink);
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.25);
+      font-size: 0.86rem;
+      font-weight: 800;
+      text-align: center;
+      animation: fadeIn 160ms ease;
+    }
+
+    .toast.bad {
+      background: var(--warn);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    @media (max-width: 390px) {
+      .app-shell {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .topbar {
+        flex-wrap: wrap;
+      }
+
+      .text-button {
+        padding: 0 10px;
+      }
+
+      .hero-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .status-pill {
+        justify-self: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="app" id="app" aria-live="polite"></section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var LS_LOGS = "lt_logs";
+      var LS_DATE = "lt_today_date";
+      var state = {
+        logs: readLogs(),
+        todayLogged: readTodayLogged(),
+        catchupOpen: false,
+        catchupCount: 1,
+        siriOpen: false,
+        toast: "",
+        toastOk: true,
+        toastTimer: null
+      };
+
+      var icons = {
+        eye: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.4-6.5 10-6.5S22 12 22 12s-3.4 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+        drops: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16.3c2.2 0 4-1.8 4-4 0-1.1-.6-2.2-1.7-3.1S7.3 6.8 7 5.3C6.7 6.8 5.9 8.2 4.7 9.1S3 11.1 3 12.3c0 2.2 1.8 4 4 4Z"/><path d="M13.1 6.4A10.7 10.7 0 0 0 14 3c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a7 7 0 0 1-11.4 5.4"/></svg>',
+        check: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+        plus: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+        minus: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>',
+        reset: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.7 9.7 0 0 0-6.7 2.7L3 8"/><path d="M3 3v5h5"/></svg>',
+        refresh: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.7-6.1L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.7 6.1L3 16"/><path d="M3 21v-5h5"/></svg>',
+        mic: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>',
+        copy: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+        calendar: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+        warn: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+        close: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+      };
+
+      var app = document.getElementById("app");
+      installIconLinks();
+      handleSiriAction();
+      render();
+
+      function readLogs() {
+        try {
+          var parsed = JSON.parse(localStorage.getItem(LS_LOGS));
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function readTodayLogged() {
+        try {
+          return localStorage.getItem(LS_DATE) === new Date().toDateString();
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function saveLogs() {
+        try {
+          localStorage.setItem(LS_LOGS, JSON.stringify(state.logs));
+        } catch (error) {}
+      }
+
+      function setTodayLogged(value) {
+        state.todayLogged = value;
+        try {
+          if (value) localStorage.setItem(LS_DATE, new Date().toDateString());
+          else localStorage.removeItem(LS_DATE);
+        } catch (error) {}
+      }
+
+      function formatDate(date) {
+        return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      }
+
+      function formatTime(date) {
+        return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      }
+
+      function logWorn(silent) {
+        if (state.todayLogged) {
+          if (!silent) showToast("Already logged today");
+          return false;
+        }
+
+        var now = new Date();
+        state.logs.push({
+          date: formatDate(now),
+          time: formatTime(now),
+          dayNum: state.logs.length + 1,
+          id: Date.now(),
+          catchup: false
+        });
+        setTodayLogged(true);
+        saveLogs();
+        if (!silent) showToast("Day " + state.logs.length + " logged");
+        render();
+        return true;
+      }
+
+      function confirmCatchup() {
+        var start = state.logs.length;
+        for (var i = 0; i < state.catchupCount; i += 1) {
+          var d = new Date();
+          d.setDate(d.getDate() - (state.catchupCount - i));
+          state.logs.push({
+            date: formatDate(d),
+            time: "backdated",
+            dayNum: start + i + 1,
+            id: Date.now() + i,
+            catchup: true
+          });
+        }
+        state.catchupOpen = false;
+        state.catchupCount = 1;
+        saveLogs();
+        showToast("Missed days added");
+        render();
+      }
+
+      function resetPair() {
+        state.logs = [];
+        state.catchupOpen = false;
+        setTodayLogged(false);
+        saveLogs();
+        showToast("New pair started");
+        render();
+      }
+
+      function refreshApp() {
+        var base = location.origin + location.pathname;
+        location.replace(base + "?v=" + Date.now());
+      }
+
+      function handleSiriAction() {
+        var params = new URLSearchParams(location.search);
+        if (params.get("action") !== "log") return;
+
+        try {
+          history.replaceState({}, "", location.pathname);
+        } catch (error) {}
+
+        if (readTodayLogged()) {
+          showToast("Already logged today");
+          return;
+        }
+
+        state.logs = readLogs();
+        state.todayLogged = false;
+        logWorn(true);
+        showToast("Logged via Siri shortcut");
+      }
+
+      function copyShortcutUrl() {
+        var url = location.origin + location.pathname + "?action=log";
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () {
+            showToast("Shortcut URL copied");
+          }, fallbackCopy);
+        } else {
+          fallbackCopy();
+        }
+
+        function fallbackCopy() {
+          var el = document.createElement("textarea");
+          el.value = url;
+          document.body.appendChild(el);
+          el.select();
+          try {
+            document.execCommand("copy");
+            showToast("Shortcut URL copied");
+          } catch (error) {
+            showToast("Could not copy URL", false);
+          }
+          document.body.removeChild(el);
+        }
+      }
+
+      function showToast(message, ok) {
+        state.toast = message;
+        state.toastOk = ok !== false;
+        clearTimeout(state.toastTimer);
+        if (app && app.innerHTML) render();
+        state.toastTimer = setTimeout(function () {
+          state.toast = "";
+          render();
+        }, 2800);
+      }
+
+      function render() {
+        var daysWorn = state.logs.length;
+        var isWarn = daysWorn >= 21;
+        var daysLeft = Math.max(0, 21 - daysWorn);
+        var progress = Math.min(daysWorn / 21 * 100, 100);
+        var colors = isWarn
+          ? {
+              active: "var(--warn)",
+              active2: "var(--warn-2)",
+              text: "#b42318",
+              soft: "var(--warn-soft)",
+              border: "rgba(229, 72, 77, 0.35)",
+              glow: "rgba(229, 72, 77, 0.28)"
+            }
+          : {
+              active: "var(--ok)",
+              active2: "var(--aqua)",
+              text: "#087886",
+              soft: "var(--ok-soft)",
+              border: "rgba(16, 185, 129, 0.35)",
+              glow: "rgba(43, 179, 192, 0.24)"
+            };
+
+        app.style.setProperty("--active", colors.active);
+        app.style.setProperty("--active-2", colors.active2);
+        app.style.setProperty("--active-text", colors.text);
+        app.style.setProperty("--active-soft", colors.soft);
+        app.style.setProperty("--active-border", colors.border);
+        app.style.setProperty("--active-glow", colors.glow);
+        app.style.setProperty("--progress", progress + "%");
+
+        app.innerHTML =
+          '<div class="topbar">' +
+            '<div class="brand">' +
+              '<div class="brand-mark">' + icons.eye + '</div>' +
+              '<div><p class="eyebrow">daily wear</p><h1>Lens Tracker</h1></div>' +
+            '</div>' +
+            '<button class="icon-button" data-action="siri" title="Set up Siri shortcut" aria-label="Set up Siri shortcut">' + icons.mic + '</button>' +
+            '<button class="icon-button" data-action="refresh" title="Reload latest version" aria-label="Reload latest version">' + icons.refresh + '</button>' +
+            '<button class="text-button" data-action="reset" title="Start a new pair">' + icons.reset + '<span>new pair</span></button>' +
+          '</div>' +
+          '<section class="hero-card">' +
+            '<div class="hero-inner">' +
+              '<div><div class="days">' + pad(daysWorn) + '</div><div class="days-label">days worn</div></div>' +
+              '<div class="status-pill">' + (isWarn ? icons.warn + ' replace' : icons.check + ' on track') + '</div>' +
+              '<div class="progress-wrap">' +
+                '<div class="progress-meta"><span>' + (isWarn ? 'Replace this pair' : daysLeft + ' days left') + '</span><span>' + Math.round(progress) + '% of 21 days</span></div>' +
+                '<div class="progress"><span></span></div>' +
+              '</div>' +
+            '</div>' +
+          '</section>' +
+          '<section class="actions">' +
+            '<button class="primary" data-action="log" ' + (state.todayLogged ? 'disabled' : '') + '>' +
+              (state.todayLogged ? icons.check + ' logged for today' : icons.drops + ' worn today') +
+            '</button>' +
+            '<button class="ghost-action" data-action="catchup">' + icons.plus + ' add missed days</button>' +
+          '</section>' +
+          '<section class="history">' +
+            '<div class="history-head">' +
+              '<div class="history-title">' + icons.calendar + ' wear history</div>' +
+              '<div class="history-count">' + daysWorn + ' ' + (daysWorn === 1 ? 'entry' : 'entries') + '</div>' +
+            '</div>' +
+            renderHistory() +
+          '</section>' +
+          renderToast() +
+          (state.catchupOpen ? renderCatchupSheet() : '') +
+          (state.siriOpen ? renderSiriSheet() : '');
+
+        bindActions();
+      }
+
+      function renderHistory() {
+        if (!state.logs.length) {
+          return '<div class="empty">' +
+            '<div>' + icons.eye + '<strong>No logs yet</strong><span>Tap worn today after you put in your lenses.</span></div>' +
+          '</div>';
+        }
+
+        var rows = state.logs.slice().reverse().map(function (log) {
+          var red = Number(log.dayNum) >= 21;
+          var style = red
+            ? '--chip: var(--warn); --chip-bg: var(--warn-soft); --chip-border: rgba(229,72,77,0.32);'
+            : '--chip: var(--ok); --chip-bg: var(--ok-soft); --chip-border: rgba(16,185,129,0.3);';
+          return '<article class="log-row" style="' + style + '">' +
+            '<div class="day-chip">' + pad(log.dayNum) + '</div>' +
+            '<div><div class="log-date">' + escapeHtml(log.date) + '</div><div class="log-time">' + (log.catchup ? 'Backdated' : escapeHtml(log.time)) + '</div></div>' +
+            '<div class="dot" aria-hidden="true"></div>' +
+          '</article>';
+        }).join("");
+
+        return '<div class="log-list">' + rows + '</div>';
+      }
+
+      function renderCatchupSheet() {
+        return '<div class="sheet-overlay" data-action="close-sheet">' +
+          '<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="catchup-title">' +
+            '<div class="grabber"></div>' +
+            '<div class="sheet-head">' +
+              '<div><h2 id="catchup-title">Missed days</h2><p>Choose how many previous wear days to add.</p></div>' +
+              '<button class="icon-button" data-action="close-sheet" aria-label="Close">' + icons.close + '</button>' +
+            '</div>' +
+            '<div class="stepper">' +
+              '<button data-action="minus" aria-label="Decrease missed days">' + icons.minus + '</button>' +
+              '<div class="step-count"><strong>' + state.catchupCount + '</strong><span>' + (state.catchupCount === 1 ? 'day' : 'days') + '</span></div>' +
+              '<button data-action="plus" aria-label="Increase missed days">' + icons.plus + '</button>' +
+            '</div>' +
+            '<button class="sheet-action" data-action="confirm-catchup">' + icons.check + ' confirm ' + state.catchupCount + ' ' + (state.catchupCount === 1 ? 'day' : 'days') + '</button>' +
+          '</section>' +
+        '</div>';
+      }
+
+      function renderSiriSheet() {
+        var url = location.origin + location.pathname + "?action=log";
+        return '<div class="sheet-overlay" data-action="close-sheet">' +
+          '<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="siri-title">' +
+            '<div class="grabber"></div>' +
+            '<div class="sheet-head">' +
+              '<div><h2 id="siri-title">Siri shortcut</h2><p>Use a voice phrase to log today without tapping the app.</p></div>' +
+              '<button class="icon-button" data-action="close-sheet" aria-label="Close">' + icons.close + '</button>' +
+            '</div>' +
+            '<div class="step-list">' +
+              setupStep(1, 'Open Shortcuts on your iPhone.') +
+              setupStep(2, 'Create a shortcut that opens a URL.') +
+              setupStep(3, 'Paste the URL below into the shortcut.') +
+              setupStep(4, 'Add the shortcut to Siri and record your phrase.') +
+            '</div>' +
+            '<div class="url-box">' +
+              '<div class="url-label">Shortcut URL</div>' +
+              '<div class="url-value">' + escapeHtml(url) + '</div>' +
+              '<button class="sheet-action" data-action="copy-url">' + icons.copy + ' copy URL</button>' +
+            '</div>' +
+          '</section>' +
+        '</div>';
+      }
+
+      function setupStep(n, text) {
+        return '<div class="setup-step"><span>' + n + '</span><div>' + escapeHtml(text) + '</div></div>';
+      }
+
+      function renderToast() {
+        if (!state.toast) return "";
+        return '<div class="toast ' + (state.toastOk ? '' : 'bad') + '">' + escapeHtml(state.toast) + '</div>';
+      }
+
+      function bindActions() {
+        app.querySelectorAll("[data-action]").forEach(function (el) {
+          el.addEventListener("click", function (event) {
+            var action = el.getAttribute("data-action");
+            var isOverlay = el.classList.contains("sheet-overlay");
+            if (action === "close-sheet" && !isOverlay) event.stopPropagation();
+            if (isOverlay && event.target !== el) return;
+
+            if (action === "log") logWorn(false);
+            if (action === "catchup") { state.catchupOpen = true; render(); }
+            if (action === "reset") resetPair();
+            if (action === "refresh") refreshApp();
+            if (action === "siri") { state.siriOpen = true; render(); }
+            if (action === "close-sheet") { state.catchupOpen = false; state.siriOpen = false; render(); }
+            if (action === "minus") { state.catchupCount = Math.max(1, state.catchupCount - 1); render(); }
+            if (action === "plus") { state.catchupCount = Math.min(14, state.catchupCount + 1); render(); }
+            if (action === "confirm-catchup") confirmCatchup();
+            if (action === "copy-url") copyShortcutUrl();
+          });
+        });
+      }
+
+      function installIconLinks() {
+        try {
+          var canvas = document.createElement("canvas");
+          canvas.width = 512;
+          canvas.height = 512;
+          var ctx = canvas.getContext("2d");
+          var gradient = ctx.createLinearGradient(0, 0, 512, 512);
+          gradient.addColorStop(0, "#ffffff");
+          gradient.addColorStop(0.58, "#e7f8fb");
+          gradient.addColorStop(1, "#fff7ed");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 512, 512);
+          ctx.strokeStyle = "#2bb3c0";
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.lineWidth = 25;
+          ctx.beginPath();
+          ctx.moveTo(86, 256);
+          ctx.bezierCurveTo(172, 120, 340, 120, 426, 256);
+          ctx.bezierCurveTo(340, 392, 172, 392, 86, 256);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(256, 256, 58, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = "#0e9f6e";
+          ctx.beginPath();
+          ctx.arc(256, 256, 25, 0, Math.PI * 2);
+          ctx.fill();
+
+          var url = canvas.toDataURL("image/png");
+          var touch = document.createElement("link");
+          touch.rel = "apple-touch-icon";
+          touch.href = url;
+          document.head.appendChild(touch);
+          var fav = document.createElement("link");
+          fav.rel = "icon";
+          fav.type = "image/png";
+          fav.href = url;
+          document.head.appendChild(fav);
+        } catch (error) {}
+      }
+
+      function pad(value) {
+        return String(value).padStart(2, "0");
+      }
+
+      function escapeHtml(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+          return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+          }[char];
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
