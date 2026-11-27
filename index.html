@@ -639,7 +639,8 @@
     <section class="app" id="app" aria-live="polite"></section>
   </main>
 
-  <script>
+  <script src="./auto-backup.js"></script>
+<script>
     (function () {
       "use strict";
 
@@ -672,6 +673,28 @@
       };
 
       var app = document.getElementById("app");
+const autoBackup = globalThis.AutoBackup?.create({id: "contact-lens-tracker", name: "Lens Tracker",
+read: () => ({logs: readLogs(), date: localStorage.getItem(LS_DATE)}),
+  validate(data) {
+    if (!data || !Array.isArray(data.logs) || !(data.date === null || typeof data.date === "string")) throw Error("Invalid lens backup.");
+    return {date: data.date, logs: data.logs.map(row => {
+      if (!row || typeof row.date !== "string" || typeof row.time !== "string" || !Number.isFinite(row.id) || !Number.isInteger(row.dayNum) || typeof row.catchup !== "boolean") throw Error("Invalid lens history.");
+      return {date: row.date, time: row.time, id: row.id, dayNum: row.dayNum, catchup: row.catchup};
+    })};
+  },
+  apply(data) {
+    const prior = localStorage.getItem(LS_LOGS);
+    try {
+      localStorage.setItem(LS_LOGS, JSON.stringify(data.logs));
+      if (data.date === null) localStorage.removeItem(LS_DATE); else localStorage.setItem(LS_DATE,data.date);
+    } catch (error) {
+      if (prior === null) localStorage.removeItem(LS_LOGS); else localStorage.setItem(LS_LOGS,prior);
+      throw error;
+    }
+    state.logs = data.logs; state.todayLogged = readTodayLogged(); render();
+    return true;
+  }
+});
       installIconLinks();
       handleSiriAction();
       render();
@@ -696,6 +719,7 @@
       function saveLogs() {
         try {
           localStorage.setItem(LS_LOGS, JSON.stringify(state.logs));
+          autoBackup?.capture();
         } catch (error) {}
       }
 
@@ -863,7 +887,8 @@
               '<div><p class="eyebrow">daily wear</p><h1>Lens Tracker</h1></div>' +
             '</div>' +
             '<button class="icon-button" data-action="siri" title="Set up Siri shortcut" aria-label="Set up Siri shortcut">' + icons.mic + '</button>' +
-            '<button class="icon-button" data-action="refresh" title="Reload latest version" aria-label="Reload latest version">' + icons.refresh + '</button>' +
+            (autoBackup ? '<button class="icon-button" data-action="auto-backup" aria-label="Auto Backup" title="Auto Backup"><span aria-hidden="true">☰</span></button>' : '') +
+          '<button class="icon-button" data-action="refresh" title="Reload latest version" aria-label="Reload latest version">' + icons.refresh + '</button>' +
             '<button class="text-button" data-action="reset" title="Start a new pair">' + icons.reset + '<span>new pair</span></button>' +
           '</div>' +
           '<section class="hero-card">' +
@@ -980,6 +1005,7 @@
             if (action === "log") logWorn(false);
             if (action === "catchup") { state.catchupOpen = true; render(); }
             if (action === "reset") resetPair();
+            if (action === "auto-backup") autoBackup?.open();
             if (action === "refresh") refreshApp();
             if (action === "siri") { state.siriOpen = true; render(); }
             if (action === "close-sheet") { state.catchupOpen = false; state.siriOpen = false; render(); }
